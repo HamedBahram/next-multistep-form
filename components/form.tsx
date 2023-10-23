@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { motion } from 'framer-motion'
 
 import { z } from 'zod'
 import { FormDataSchema } from '@/lib/schema'
@@ -24,7 +25,9 @@ const steps = [
 ]
 
 export default function Form() {
+  const [previousStep, setPreviousStep] = useState(0)
   const [currentStep, setCurrentStep] = useState(0)
+  const delta = currentStep - previousStep
 
   const {
     register,
@@ -54,12 +57,14 @@ export default function Form() {
       if (currentStep === steps.length - 2) {
         await handleSubmit(processForm)()
       }
+      setPreviousStep(currentStep)
       setCurrentStep(step => step + 1)
     }
   }
 
   const prev = () => {
     if (currentStep > 0) {
+      setPreviousStep(currentStep)
       setCurrentStep(step => step - 1)
     }
   }
@@ -72,18 +77,14 @@ export default function Form() {
           {steps.map((step, index) => (
             <li key={step.name} className='md:flex-1'>
               {currentStep > index ? (
-                <button
-                  onClick={() => setCurrentStep(index)}
-                  className='group flex w-full flex-col border-l-4 border-sky-600 py-2 pl-4 transition-colors hover:border-sky-800 md:border-l-0 md:border-t-4 md:pb-0 md:pl-0 md:pt-4'
-                >
-                  <span className='text-sm font-medium text-sky-600 transition-colors group-hover:text-sky-800'>
+                <div className='group flex w-full flex-col border-l-4 border-sky-600 py-2 pl-4 transition-colors md:border-l-0 md:border-t-4 md:pb-0 md:pl-0 md:pt-4'>
+                  <span className='text-sm font-medium text-sky-600 transition-colors '>
                     {step.id}
                   </span>
                   <span className='text-sm font-medium'>{step.name}</span>
-                </button>
+                </div>
               ) : currentStep === index ? (
-                <button
-                  onClick={() => setCurrentStep(index)}
+                <div
                   className='flex w-full flex-col border-l-4 border-sky-600 py-2 pl-4 md:border-l-0 md:border-t-4 md:pb-0 md:pl-0 md:pt-4'
                   aria-current='step'
                 >
@@ -91,17 +92,14 @@ export default function Form() {
                     {step.id}
                   </span>
                   <span className='text-sm font-medium'>{step.name}</span>
-                </button>
+                </div>
               ) : (
-                <button
-                  onClick={() => setCurrentStep(index)}
-                  className='group flex w-full flex-col border-l-4 border-gray-200 py-2 pl-4 transition-colors hover:border-gray-300 md:border-l-0 md:border-t-4 md:pb-0 md:pl-0 md:pt-4'
-                >
-                  <span className='text-sm font-medium text-gray-500 transition-colors group-hover:text-gray-700'>
+                <div className='group flex w-full flex-col border-l-4 border-gray-200 py-2 pl-4 transition-colors md:border-l-0 md:border-t-4 md:pb-0 md:pl-0 md:pt-4'>
+                  <span className='text-sm font-medium text-gray-500 transition-colors'>
                     {step.id}
                   </span>
                   <span className='text-sm font-medium'>{step.name}</span>
-                </button>
+                </div>
               )}
             </li>
           ))}
@@ -111,7 +109,11 @@ export default function Form() {
       {/* Form */}
       <form className='mt-12 py-12' onSubmit={handleSubmit(processForm)}>
         {currentStep === 0 && (
-          <>
+          <motion.div
+            initial={{ x: delta >= 0 ? '50%' : '-50%', opacity: 0 }}
+            animate={{ x: 0, opacity: 1 }}
+            transition={{ duration: 0.3, ease: 'easeInOut' }}
+          >
             <h2 className='text-base font-semibold leading-7 text-gray-900'>
               Personal Information
             </h2>
@@ -188,11 +190,15 @@ export default function Form() {
                 </div>
               </div>
             </div>
-          </>
+          </motion.div>
         )}
 
         {currentStep === 1 && (
-          <>
+          <motion.div
+            initial={{ x: delta >= 0 ? '50%' : '-50%', opacity: 0 }}
+            animate={{ x: 0, opacity: 1 }}
+            transition={{ duration: 0.3, ease: 'easeInOut' }}
+          >
             <h2 className='text-base font-semibold leading-7 text-gray-900'>
               Address
             </h2>
@@ -319,7 +325,7 @@ export default function Form() {
                 </div>
               </div>
             </div>
-          </>
+          </motion.div>
         )}
 
         {currentStep === 2 && (
