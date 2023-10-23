@@ -2,17 +2,58 @@
 
 import { useState } from 'react'
 
+import { z } from 'zod'
+import { FormDataSchema } from '@/lib/schema'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { useForm, SubmitHandler } from 'react-hook-form'
+
+type Inputs = z.infer<typeof FormDataSchema>
+
 const steps = [
-  { id: 'Step 1', name: 'Personal Information' },
-  { id: 'Step 2', name: 'Address' },
+  {
+    id: 'Step 1',
+    name: 'Personal Information',
+    fields: ['firstName', 'lastName', 'email']
+  },
+  {
+    id: 'Step 2',
+    name: 'Address',
+    fields: ['country', 'state', 'city', 'street', 'zip']
+  },
   { id: 'Step 3', name: 'Complete' }
 ]
 
 export default function Form() {
   const [currentStep, setCurrentStep] = useState(0)
 
-  const next = () => {
+  const {
+    register,
+    handleSubmit,
+    watch,
+    reset,
+    trigger,
+    formState: { errors }
+  } = useForm<Inputs>({
+    resolver: zodResolver(FormDataSchema)
+  })
+
+  const processForm: SubmitHandler<Inputs> = data => {
+    console.log(data)
+    reset()
+  }
+
+  type FieldName = keyof Inputs
+
+  const next = async () => {
+    const fields = steps[currentStep].fields
+    const output = await trigger(fields as FieldName[], { shouldFocus: true })
+
+    if (!output) return
+
     if (currentStep < steps.length - 1) {
+      if (currentStep === steps.length - 2) {
+        await handleSubmit(processForm)()
+      }
       setCurrentStep(step => step + 1)
     }
   }
@@ -68,7 +109,7 @@ export default function Form() {
       </nav>
 
       {/* Form */}
-      <form className='mt-12 py-12'>
+      <form className='mt-12 py-12' onSubmit={handleSubmit(processForm)}>
         {currentStep === 0 && (
           <>
             <h2 className='text-base font-semibold leading-7 text-gray-900'>
@@ -80,7 +121,7 @@ export default function Form() {
             <div className='mt-10 grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-6'>
               <div className='sm:col-span-3'>
                 <label
-                  htmlFor='first-name'
+                  htmlFor='firstName'
                   className='block text-sm font-medium leading-6 text-gray-900'
                 >
                   First name
@@ -88,17 +129,22 @@ export default function Form() {
                 <div className='mt-2'>
                   <input
                     type='text'
-                    name='first-name'
-                    id='first-name'
+                    id='firstName'
+                    {...register('firstName')}
                     autoComplete='given-name'
                     className='block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-sky-600 sm:text-sm sm:leading-6'
                   />
+                  {errors.firstName?.message && (
+                    <p className='mt-2 text-sm text-red-400'>
+                      {errors.firstName.message}
+                    </p>
+                  )}
                 </div>
               </div>
 
               <div className='sm:col-span-3'>
                 <label
-                  htmlFor='last-name'
+                  htmlFor='lastName'
                   className='block text-sm font-medium leading-6 text-gray-900'
                 >
                   Last name
@@ -106,11 +152,16 @@ export default function Form() {
                 <div className='mt-2'>
                   <input
                     type='text'
-                    name='last-name'
-                    id='last-name'
+                    id='lastName'
+                    {...register('lastName')}
                     autoComplete='family-name'
                     className='block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-sky-600 sm:text-sm sm:leading-6'
                   />
+                  {errors.lastName?.message && (
+                    <p className='mt-2 text-sm text-red-400'>
+                      {errors.lastName.message}
+                    </p>
+                  )}
                 </div>
               </div>
 
@@ -124,11 +175,16 @@ export default function Form() {
                 <div className='mt-2'>
                   <input
                     id='email'
-                    name='email'
                     type='email'
+                    {...register('email')}
                     autoComplete='email'
                     className='block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-sky-600 sm:text-sm sm:leading-6'
                   />
+                  {errors.email?.message && (
+                    <p className='mt-2 text-sm text-red-400'>
+                      {errors.email.message}
+                    </p>
+                  )}
                 </div>
               </div>
             </div>
@@ -155,7 +211,7 @@ export default function Form() {
                 <div className='mt-2'>
                   <select
                     id='country'
-                    name='country'
+                    {...register('country')}
                     autoComplete='country-name'
                     className='block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-sky-600 sm:max-w-xs sm:text-sm sm:leading-6'
                   >
@@ -163,12 +219,17 @@ export default function Form() {
                     <option>Canada</option>
                     <option>Mexico</option>
                   </select>
+                  {errors.country?.message && (
+                    <p className='mt-2 text-sm text-red-400'>
+                      {errors.country.message}
+                    </p>
+                  )}
                 </div>
               </div>
 
               <div className='col-span-full'>
                 <label
-                  htmlFor='street-address'
+                  htmlFor='street'
                   className='block text-sm font-medium leading-6 text-gray-900'
                 >
                   Street address
@@ -176,11 +237,16 @@ export default function Form() {
                 <div className='mt-2'>
                   <input
                     type='text'
-                    name='street-address'
-                    id='street-address'
+                    id='street'
+                    {...register('street')}
                     autoComplete='street-address'
                     className='block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-sky-600 sm:text-sm sm:leading-6'
                   />
+                  {errors.street?.message && (
+                    <p className='mt-2 text-sm text-red-400'>
+                      {errors.street.message}
+                    </p>
+                  )}
                 </div>
               </div>
 
@@ -194,17 +260,22 @@ export default function Form() {
                 <div className='mt-2'>
                   <input
                     type='text'
-                    name='city'
                     id='city'
+                    {...register('city')}
                     autoComplete='address-level2'
                     className='block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-sky-600 sm:text-sm sm:leading-6'
                   />
+                  {errors.city?.message && (
+                    <p className='mt-2 text-sm text-red-400'>
+                      {errors.city.message}
+                    </p>
+                  )}
                 </div>
               </div>
 
               <div className='sm:col-span-2'>
                 <label
-                  htmlFor='region'
+                  htmlFor='state'
                   className='block text-sm font-medium leading-6 text-gray-900'
                 >
                   State / Province
@@ -212,17 +283,22 @@ export default function Form() {
                 <div className='mt-2'>
                   <input
                     type='text'
-                    name='region'
-                    id='region'
+                    id='state'
+                    {...register('state')}
                     autoComplete='address-level1'
                     className='block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-sky-600 sm:text-sm sm:leading-6'
                   />
+                  {errors.state?.message && (
+                    <p className='mt-2 text-sm text-red-400'>
+                      {errors.state.message}
+                    </p>
+                  )}
                 </div>
               </div>
 
               <div className='sm:col-span-2'>
                 <label
-                  htmlFor='postal-code'
+                  htmlFor='zip'
                   className='block text-sm font-medium leading-6 text-gray-900'
                 >
                   ZIP / Postal code
@@ -230,11 +306,16 @@ export default function Form() {
                 <div className='mt-2'>
                   <input
                     type='text'
-                    name='postal-code'
-                    id='postal-code'
+                    id='zip'
+                    {...register('zip')}
                     autoComplete='postal-code'
                     className='block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-sky-600 sm:text-sm sm:leading-6'
                   />
+                  {errors.zip?.message && (
+                    <p className='mt-2 text-sm text-red-400'>
+                      {errors.zip.message}
+                    </p>
+                  )}
                 </div>
               </div>
             </div>
