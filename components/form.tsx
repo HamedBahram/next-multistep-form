@@ -1,12 +1,13 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
 
 import { z } from 'zod'
 import { FormDataSchema } from '@/lib/schema'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useForm, SubmitHandler } from 'react-hook-form'
+import localData from '@/helpers/localData'
 
 type Inputs = z.infer<typeof FormDataSchema>
 
@@ -37,8 +38,27 @@ export default function Form() {
     trigger,
     formState: { errors }
   } = useForm<Inputs>({
-    resolver: zodResolver(FormDataSchema)
+    resolver: zodResolver(FormDataSchema),
+    defaultValues: {
+      firstName: '',
+      lastName: '',
+      email: '',
+      country: '',
+      street: '',
+      city: '',
+      state: '',
+      zip: ''
+    }
   })
+
+  useEffect(() => {
+    // Load data from localStorage when the component mounts
+    const savedData = localData({ item: 'formData', type: 'get' })
+    if (savedData) {
+      // You might need to set this data to your form using reset or any other way
+      reset(savedData)
+    }
+  }, [])
 
   const processForm: SubmitHandler<Inputs> = data => {
     console.log(data)
@@ -59,6 +79,8 @@ export default function Form() {
       }
       setPreviousStep(currentStep)
       setCurrentStep(step => step + 1)
+      // Update local data for the second step if the user goes back to first step
+      localData({ item: 'formData', type: 'set', data: watch() })
     }
   }
 
@@ -66,6 +88,8 @@ export default function Form() {
     if (currentStep > 0) {
       setPreviousStep(currentStep)
       setCurrentStep(step => step - 1)
+      // When the user goes back, update the local data with the current form state
+      localData({ item: 'formData', type: 'set', data: watch() })
     }
   }
 
